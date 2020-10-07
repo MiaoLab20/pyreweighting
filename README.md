@@ -11,6 +11,7 @@ Usage:
 Make sure set temperate for $T, which may have been ignored in previous calculations.
 
 Tutorial:
+
 ####################################################
 # Prepare input file "weights.dat" in the following format: 
 # Column 1: dV in units of kbT; column 2: timestep; column 3: dV in units of kcal/mol
