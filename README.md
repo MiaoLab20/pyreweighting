@@ -5,6 +5,7 @@ A toolkit of python scripts "PyReweighting" is provided to facilitate the reweig
 * Update dir_codes in the .sh files to the folder where you save the .py scripts
 
 * Example command lines for using the .sh scripts:
+
 ./reweight-1d.sh $Emax $cutoff $binx $data $T
 
 ./reweight-2d.sh $Emax $cutoff $binx $biny $data $T
