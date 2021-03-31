@@ -6,8 +6,11 @@ A toolkit of python scripts "PyReweighting" is provided to facilitate the reweig
 
 * Example command lines for using the .sh scripts:
 ./reweight-1d.sh $Emax $cutoff $binx $data $T
+
 ./reweight-2d.sh $Emax $cutoff $binx $biny $data $T
+
 ./reweight-3d.sh $Emax $cutoff $binx $biny $binz $data $T
+
 Make sure set temperate for $T, which may have been ignored in previous calculations.
 
 # Citation
