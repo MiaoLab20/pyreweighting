@@ -186,6 +186,11 @@ def main():
         pmffile = 'weights-'+str(args.input)+'.xvg'
         output_pmf(pmffile,weights,data)
     if args.job == "amdweight_CE" :
+        ##Convert c1, c12, c123 back to cumulant sums
+        c1 = -np.multiply(beta, c1)
+        c12 = -np.multiply(beta, c12)
+        c123 = -np.multiply(beta, c123)
+
         hist = np.exp(c1)
         pmffile = 'weights-c1-'+str(args.input)+'.xvg'
         output_pmf(pmffile,hist,binsX)
