@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>AMD Reweighting</title>
+<style type="text/css">
+<!--
+.body {
+	font-family: "Times New Roman", "Times", "serif";
+	font-size: 12pt;
+	color: #000000;
+	text-transform: none;
+	font-style: normal;
+	font-weight: normal;
+}
+.table {	font-family: "Georgia", "Times New Roman", "Times", "serif";
+	font-size: 10pt;
+	color: #666600;
+	text-transform: none;
+	font-style: normal;
+	font-weight: normal;
+}
+.title {
+	font-family: Verdana, Geneva, sans-serif;
+	font-size: 18pt;
+	color: #000000;
+	font-style: normal;
+	font-weight: bold;
+}
+-->
+</style>
+</head>
+
+<body>
+<table width=800 border=0 align=center cellpadding=0 cellspacing=0>
+  <tr>
+    <td>
+<p align="center"><strong class="title">Reweighting of Accelerated Molecular Dynamics (aMD) Simulations</strong></p>
+<p align="left" class="title"><strong>Background</strong></p>
+<p>Accelerated molecular dynamics (aMD) is an enhanced sampling technique that works by flattening the molecular potential energy surface, often by adding a non-negative boost potential when the system potential is lower than a reference energy. The boost potential, ΔV decreases the energy barriers and thus accelerates transitions between different low-energy states. With this, aMD is able to sample distinct biomolecular conformations and rare barrier-crossing events that are not accessible to conventional molecular dynamics (cMD) simulations. AMD has been successfully applied to a number of biological systems and hundreds-of-nanosecond aMD simulations have been shown to capture millisecond-timescale events in both globular and membrane proteins. </p>
+<p>In addition, it is appealing to reweight aMD trajectories to recover  canonical ensemble and  the original free energy profile of functional biomolecules. Here, we provide a toolkit of python scripts &quot;PyReweighting&quot; to facilitate the reweighting of aMD simulations. PyReweighting implements a list of commonly used reweighting methods, including (1) exponential average that reweights trajectory frames by the Boltzmann factor of the boost potential and then calculates the ensemble average for each bin, (2)  Maclaurin series expansion that approximates the exponential Boltzmann factor, and (3) cumulant expansion that expresses the reweighting factor as summation of boost potential cumulants.<br />
+</p>
+<p class="title"><strong>Downloads</strong></p>
+<p><a href="PyReweighting-1D.py">PyReweighting-1D.py</a><br>
+  <a href="PyReweighting-2D.py">PyReweighting-2D.py</a></p>
+<p class="title"><strong>Test Example</strong></p>
+<p><a href="test-PyReweighting.tgz">test-PyReweighting.tgz</a><br>
+  Uncompress the file: tar -xvzf test-PyReweighting.tgz</p>
+<p class="title"><strong> Tutorial</strong></p>
+The following tutorial can also be downloaded as a batch script: <a href="run.sh" target="_blank">run.sh</a>
+<p>####################################################<br />
+  # Prepare input file &quot;weights.dat&quot; in the following format: <br/> 
+  #     Column 1: dV in units of kbT; column 2: timestep; column 3: dV in units of kcal/mol<br />
+  <br>
+  # For AMBER14: <br/>
+  # awk 'NR%1==0' amd.log | awk '{print ($8+$7)/(0.001987*300)&quot;                &quot; $2  &quot;             &quot; ($8+$7)}' &gt; weights.dat<br/>
+  <br>
+  # For AMBER12: <br/>
+  # awk 'NR%1==0' amd.log | awk '{print ($8+$7)&quot;                &quot; $3  &quot;             &quot; ($8+$7)*(0.001987*300)}' &gt; weights.dat<br/>
+  <br>
+  # For NAMD simulation: <br/>
+  # grep "ACCELERATED MD" namd.log | awk 'NR%1==0' | awk '{print $6/(0.001987*300)"                " $4  "             " $6 "            "$8}' > weights.dat</p>
+
+<p>####################################################<br />
+  # 1D data<br />
+  # Prepare input data file &quot;Psi.dat&quot; in one column, e.g., a dihedral angle Psi<br />
+  # ptraj can be used for AMBER simulations</p>
+<p># Reweighting using cumulant expansion <br />
+  python PyReweighting-1D.py -input Psi.dat -cutoff 10 -Xdim -180 180 -disc 6 -Emax 20 -job amdweight_CE -weight weights.dat | tee -a reweight_variable.log<br />
+  mv -v pmf-c1-Psi.dat.xvg pmf-Psi-reweight-CE1.xvg<br />
+  mv -v pmf-c2-Psi.dat.xvg pmf-Psi-reweight-CE2.xvg<br />
+  mv -v pmf-c3-Psi.dat.xvg pmf-Psi-reweight-CE3.xvg</p>
+<p># Reweighting using Maclaurin series expansion<br />
+  python PyReweighting-1D.py -input Psi.dat -disc 6 -Emax 20 -job amdweight_MC -order 10 -weight weights.dat | tee -a reweight_variable.log<br />
+  mv -v pmf-Psi.dat.xvg pmf-Psi-reweight-MC-order10.xvg</p>
+<p># Reweighting using exponential average<br />
+  python PyReweighting-1D.py -input Psi.dat -disc 6 -Emax 20 -job amdweight -weight weights.dat | tee -a reweight_variable.log<br />
+  mv -v pmf-Psi.dat.xvg pmf-Psi-reweight.xvg</p>
+<p># NOTE: Check out cumulant expansion to the 2nd order &quot;pmf-Psi-reweight-CE2.xvg&quot;; normally it gives the most accurate result!</p>
+<p>####################################################<br />
+  # 2D data<br />
+  # Prepare input data file &quot;Phi_Psi&quot; in two columns<br />
+  # ptraj can be used for AMBER simulations</p>
+<p># Reweighting using cumulant expansion <br />
+  python PyReweighting-2D.py -cutoff 10 -input Phi_Psi -Xdim -180 180 -discX 6 -Ydim -180 180 -discY 6 -Emax 20 -job amdweight_CE -weight weights.dat | tee -a reweight_variable.log<br />
+  mv -v pmf-c1-Phi_Psi.xvg pmf-2D-Phi_Psi-reweight-CE1.xvg<br />
+  mv -v pmf-c2-Phi_Psi.xvg pmf-2D-Phi_Psi-reweight-CE2.xvg<br />
+  mv -v pmf-c3-Phi_Psi.xvg pmf-2D-Phi_Psi-reweight-CE3.xvg<br />
+  mv -v 2D_Free_energy_surface.png pmf-2D-Phi_Psi-reweight-CE2.png</p>
+<p># Reweighting using Maclaurin series expansion<br />
+  python PyReweighting-2D.py -input Phi_Psi -Emax 100 -discX 6 -discY 6 -job amdweight_MC -order 10 -weight weights.dat | tee -a reweight_variable.log<br />
+  mv -v pmf-Phi_Psi.xvg pmf-2D-Phi_Psi-reweight-MC-order10-disc6.xvg<br />
+  mv -v 2D_Free_energy_surface.png pmf-2D-Phi_Psi-reweight-MC-order10-disc6.png</p>
+<p># Reweighting using exponential average<br />
+  python PyReweighting-2D.py -input Phi_Psi -Emax 20 -discX 6 -discY 6 -job amdweight -weight weights.dat | tee -a reweight_variable.log<br />
+  mv -v pmf-Phi_Psi.xvg pmf-2D-Phi_Psi-reweight.xvg<br />
+  mv -v 2D_Free_energy_surface.png pmf-2D-Phi_Psi-reweight.png</p>
+<p><strong>NOTES: <br />
+  1) Maclaurin series &quot;pmf-2D-Phi_Psi-reweight-MC-order10-disc6.png&quot; is equivalent to cumulant expansion on the 1st order &quot;pmf-2D-Phi_Psi-reweight-CE1.xvg&quot;<br />
+  2) Check out cumulant expansion to the 2nd order &quot;pmf-2D-Phi_Psi-reweight-CE2.png&quot;; normally it gives the most accurate result!<br />
+  3) The above python scripts work for any kind of reaction coordinates, e.g., atom distance, RMSD, or Principal Component Analysis (PCA) modes. You just need to change the default parameters "-Xdim -180 180 -discX 6 -Ydim -180 180 -discY 6" to the dimension and bin size of the corresponding reaction coordinates for reweighting.  <br />
+  4) The current reweighting scheme using cumulant expansion to the 2nd order is limited to aMD simulations of small systems, e.g., proteins with 10 - 40 residues. For larger proteins with more than 100 residues, the energetic noise would be too high for accurate reweighting. Further research has been focused on reducing such energetic noise in simulation of large proteins.
+</strong></p>
+<p class="title"><strong>Citation</strong></p>
+<p>Miao Y, Sinko W, Pierce L, Bucher D, Walker RC, McCammon JA (2014) <a href="http://pubs.acs.org/doi/abs/10.1021/ct500090q" target="_blank"> Improved reweighting of accelerated molecular dynamics simulations for free energy calculation. J Chemical Theory and Computation</a>, DOI: 10.1021/ct500090q.</p>
+<p class="title"><strong>Related resources</strong></p>
+<p>Scaled Molecular Dynamics (scaled MD) with population-based reweighting: <br>
+  <a href="http://scaledmd.ucsd.edu/" target="_blank">http://scaledmd.ucsd.edu/</a></p>
+<p align="center"><font size="2" face="Georgia, Times New Roman, Times, serif">◇ Last updated:
+  Tue, February 4, 2014
+  ◇</font></p>
+<p></p></td>
+  </tr>
+</table>
+
+</body>
+</html>
